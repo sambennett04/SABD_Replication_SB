@@ -259,7 +259,9 @@ def main(_run, _config, _seed, _log):
 
     compareAggOpt = args['compare_aggregation']
     databasePath = args['bug_database']
-
+    
+    print(compareAggOpt["word_embedding"])
+        
     # Loading word embedding
     if compareAggOpt["lexicon"]:
         emb = np.load(compareAggOpt["word_embedding"])
@@ -334,6 +336,7 @@ def main(_run, _config, _seed, _log):
         compareAggOpt['aggregate'], 
         compareAggOpt['classifier'], 
         freq
+        #error generated ^^
     )
 
     if args['loss'] == 'bce':

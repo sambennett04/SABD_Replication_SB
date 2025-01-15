@@ -62,9 +62,10 @@ def maxVector(x, lengths):
 
 
 def createEmbeddingLayer(embeddingObject, updateEmbedding):
+    print("the embedding object matrix is", embeddingObject.getEmbeddingMatrix())
     embedding = nn.Embedding(embeddingObject.getNumberOfVectors(), embeddingObject.getEmbeddingSize(), padding_idx=embeddingObject.getPaddingIdx())
-    embedding.weight.data.copy_(torch.from_numpy(embeddingObject.getEmbeddingMatrix()))
-
+    embedding.weight.data.copy_(torch.from_numpy(embeddingObject.getEmbeddingMatrix().astype(float)))
+    #error from ^^
     embedding.weight.requires_grad = updateEmbedding
 
     inputSize = embeddingObject.getEmbeddingSize()

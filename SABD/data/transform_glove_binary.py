@@ -52,7 +52,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     logger.info(args)
     lexicon, embedding = Embedding.fromFile(args.word_embedding, 'UUUKNNN', hasHeader=False, paddingSym="</s>")
-    database_lexicon = set(['UUUKNNN', '</s>'])
+    database_lexicon = set(['UUUKNNN', '</s>']) #this is used to pass over whitespaces
+
+    print(embedding.getEmbeddingMatrix().shape)
+    print(embedding.getEmbeddingMatrix())
 
     if args.db is not None:
         # Filter any word that is not in the dataset.
@@ -89,9 +92,14 @@ if __name__ == '__main__':
         f.write('\n')
 
         embeddings.append(emb)
+        #print(numpy.asarray(embeddings).shape)
 
     f.close()
     numpy.save(args.output, numpy.asarray(embeddings))
-
+    #embeddings is delcared as a 1d list but when it is printed as a np array it becomes a matrix
+    print(numpy.asarray(embeddings))
+    print(numpy.asarray(embeddings).shape)
+    print("the length of the embeddings is", len(embeddings))
+    print("the length of the embeddings[0] is", len(embeddings[0]))
     print('Total embeddings: {}'.format(len(lexicon.getLexiconList())))
     print('Total of removed embeddings: {}'.format(n_removed_words))

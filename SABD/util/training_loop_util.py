@@ -130,5 +130,6 @@ def logRankingResult(expRun, logger, rankingClass, rankingScorer, bugReportDatab
             'epoch': epoch
         }
     )
-
+    
+    #prints out positions as array
     logger.info('{}'.format(positions))
