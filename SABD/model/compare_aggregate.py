@@ -591,6 +591,7 @@ class SABD(nn.Module):
 
         # Create and set word encoder
         self.word_embedding, self.word_size = createEmbeddingLayer(embedding_obj, False)
+        #error here ^^
         self.paddingId = self.word_embedding.padding_idx
         self.emb_dropout = Dropout(extractor_opt["emb_dropout"]) if extractor_opt["emb_dropout"] > 0.0 else None
 

@@ -118,7 +118,7 @@ if __name__ == '__main__':
     nm_duplicate_report = 0
     bug_ids_set = set()
 
-
+    #open each json object in the input json file
     with codecs.open(json_file, 'r', encoding='utf-8') as f:
         cur_latest_json_lines = f.readlines()
 
@@ -127,19 +127,24 @@ if __name__ == '__main__':
 
         creationDate = readDateFunc(b)
 
+        #not given by our example
         if dateThreshold is not None and creationDate > dateThreshold:
             nm_report_removed += 1
             continue
 
+        #not given by our example
         if args.rm_empty_report and (len(b['description'].strip()) == 0 or len(b['short_desc'].strip()) == 0):
             nm_empty_reports += 1
             continue
 
+        #check if the current bug_id in the bug id set, if it is, its already a duplicate
         if b['bug_id'] in bug_ids_set:
             nm_duplicate_report+=1
             continue
 
+        #not a duplicate bug id, so add to duplicate bug set
         bug_ids_set.add(b['bug_id'])
+        #adds to the list of tuples the creation date of the bug and the bug itself(which is a dictionary)
         bugAndDateTuples.append((creationDate, b))
 
         bugId = b['bug_id']
@@ -148,9 +153,10 @@ if __name__ == '__main__':
         except KeyError:
             dupId = list()
 
+        #adds the current bug to the bug by id dictionary, using its bugId as the key
         bugById[bugId] = b
 
-        # Put all duplicate bugs of a same set in a list
+        # Put all duplicate bugs of a same set in a list, share same master
         if len(dupId) != 0:
             bugList = bugsByMasterId.get(dupId, [])
 
@@ -379,6 +385,8 @@ if __name__ == '__main__':
     del bugsByMasterId
 
     ###################################################################################
+
+    #sorts bugID tuples by their bug_ids
     sortedBugs = sorted(bugAndDateTuples, key=lambda tup: (tup[0], int(tup[1]['bug_id'])))
 
     # The index where the test begins
@@ -396,6 +404,7 @@ if __name__ == '__main__':
     masterAlreadySeen = set()
 
     if args.test_perc > 0:
+        print("hit test perc case")
         # Split the dataset by a percentage of duplicate bug reports
         duplicateIdxs = []
         logger.info('Split the dataset into training and test using %f/%f .' % \
@@ -425,6 +434,7 @@ if __name__ == '__main__':
         testDuplicateReports = [sortedBugs[idx][1] for idx in duplicateIdxs[splitIdx + 1:]]
 
     elif args.test_duplicate_bf > 0:
+        print("hits test duplicate case")
         nm_bug_after_date = args.test_duplicate_bf
 
         if args.without_timezone:
@@ -468,8 +478,10 @@ if __name__ == '__main__':
             else:
                 masterAlreadySeen.add(masterId)
     else:
+        print("hit else case")
         # Split the dataset by a specific date
         if args.without_timezone:
+            
             splitDate = datetime.strptime(args.date, '%Y/%m/%d')
         else:
             splitDate = datetime.strptime(args.date + " +0000", '%Y/%m/%d %z')
@@ -482,6 +494,7 @@ if __name__ == '__main__':
         for idx, (date, bug) in enumerate(sortedBugs):
             masterId = masterSetIdByBug.get(bug['bug_id'])
 
+            #based on splitDate, if bug date is less than specified date, add to trainingReports if greater add to testRepo
             if date < splitDate:
                 trainingReports.append(bug)
                 l = trainingDuplicateReports
@@ -533,7 +546,8 @@ if __name__ == '__main__':
 
     else:
         splitValitionIdx = int((1 - validationRate) * len(trainingDuplicateReports))
-
+        
+        #print("trainingDuplicateReports is: ", trainingDuplicateReports)
         trainingSplitDuplicate = trainingDuplicateReports[:splitValitionIdx + 1]
         validationDuplicate = trainingDuplicateReports[splitValitionIdx + 1:]
 
@@ -543,6 +557,7 @@ if __name__ == '__main__':
 
         for idx, bug in enumerate(trainingReports):
             if lastDuplicateIdx is None:
+                #print("training split duplicate is: ", trainingSplitDuplicate)
                 if bug['bug_id'] == trainingSplitDuplicate[splitValitionIdx]['bug_id']:
                     lastDuplicateIdx = idx
 

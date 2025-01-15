@@ -33,7 +33,9 @@ if __name__ == '__main__':
     logger.addHandler(logHandler)
 
     logger.info("Loading bug reports content")
+    #loads the bugs from the json file
     bugReportDataset = BugReportDatabase.fromJson(args.bug_dataset)
+
     newFile = codecs.open(args.output, "w", encoding='utf-8')
 
     nEmptyBugs = 0
@@ -47,9 +49,23 @@ if __name__ == '__main__':
 
     logger.info("Cleaning Data")
     empty_bug_ids = set()
+
+    #tqdm is just a progress bar, indicates what percentage of the bugs have been cleaned, ie. what loop itteration we are on
+
+    #once for each bug
+
+    cleaned_description_counter = 0
     for idx in tqdm(range(len(bugReportDataset))):
+
+        #get the current bug
         bug = bugReportDataset.getBugByIndex(idx)
+
+        #splits the current bug into a dictionary
         cleanBug = dict(bug)
+
+        #for our example short desc and description
+
+        
 
         for fieldName in args.fields:
             try:
@@ -58,11 +74,16 @@ if __name__ == '__main__':
             except TypeError:
                 print(bug['bug_id'])
 
+            #length of string that represents either short desc or long desc of current bug
             l = len(bug[fieldName])
 
+            #cleaning full description
             if fieldName == 'description':
+                cleaned_description_counter += 1
                 cleanBug[fieldName] = cleanFunc(bug[fieldName], args.rm_punc, args.sent_tok, \
                     args.rm_number, args.stop_words, args.stem, args.lower_case, args.rm_char)
+
+            #cleaning shortened description
             else:
                 cleanBug[fieldName] = cleanFunc(bug[fieldName], args.rm_punc, False, \
                     args.rm_number, args.stop_words, args.stem, args.lower_case, args.rm_char)
@@ -77,5 +98,6 @@ if __name__ == '__main__':
         newFile.write(ujson.dumps(cleanBug))
         newFile.write("\n")
 
+    #print("the number of descriptions cleaned: ", cleaned_description_counter)
     logging.info("Total number of new empty bugs: %d" % nEmptyBugs)
     logging.info("Finish!!!")

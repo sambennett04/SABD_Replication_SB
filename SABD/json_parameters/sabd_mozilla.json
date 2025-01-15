@@ -1,5 +1,5 @@
 {
-    "bug_database": "dataset/mozilla/mozilla_soft_clean.json",
+    "bug_database": "../dataset/mozilla/mozilla_first_100_soft_clean.json",
     "database_name": "mozilla", 
     "epochs": 12,
     "lr": 0.001,
@@ -7,17 +7,17 @@
     "ranking_batch_size": 512,
     "cuda": true,
     "cache_folder": "scratch/temp/",
-    "pairs_training": "dataset/mozilla/training_split_mozilla_pairs_random_1.txt",
-    "pairs_validation": "dataset/mozilla/validation_mozilla_pairs_random_1.txt",
+    "pairs_training": "../dataset/mozilla/mini_training_split_mozilla_pairs_random_1.txt",
+    "pairs_validation": "../dataset/mozilla/mini_validation_mozilla_pairs_random_1.txt",
     "neg_pair_generator": {
         "type": "non_negative",
-        "training": "dataset/mozilla/training_mozilla.txt",
+        "training": "../dataset/mozilla/mini_training_mozilla.txt",
         "n_tries": 15,
         "rate": 1
     },
     "compare_aggregation": {
-        "word_embedding": "word_embedding/mozilla/glove_42B_300d_mozilla.npy",
-        "lexicon": "word_embedding/mozilla/glove_42B_300d_mozilla.lxc",
+        "word_embedding": "./word_embedding/mozilla/glove_42B_300d_mini_mozilla_soft.npy",
+        "lexicon": "./word_embedding/mozilla/glove_42B_300d_mini_mozilla_soft.lxc",
         "tokenizer": "white_space",
         "extractor": {
             "model": "linear",
@@ -48,7 +48,7 @@
         }
     },
     "categorical": {
-        "lexicons": "dataset/mozilla/categorical_lexicons.json",
+        "lexicons": "../dataset/mozilla/mini_categorical_lexicons.json",
         "bn_last_layer": false,
         "emb_size": 20,
         "hidden_sizes": [40],
@@ -62,7 +62,7 @@
     "lr_scheduler": null,
     "recall_rate": {
         "type": "sun2011",
-        "dataset": "dataset/mozilla/test_mozilla.txt",
+        "dataset": "../dataset/mozilla/mini_test_mozilla.txt",
         "group_by_master": true,
         "window": 365
     },

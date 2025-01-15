@@ -157,6 +157,10 @@ class PairBugDatasetReader(object):
 
         for l in f:
             anchorId, OtherBugId, label = l.strip().split(',')
+            
+            #print("anchorId is: ",anchorId)
+            #print("OtherBugId is: ",OtherBugId)
+            #print("Label is: ",label)
 
             anchorBug = preprocessor.extract(anchorId)
             ftrsOtherBug = preprocessor.extract(OtherBugId)

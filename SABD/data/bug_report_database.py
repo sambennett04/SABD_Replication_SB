@@ -4,6 +4,8 @@ This class represents a bug report database where we can find all bug reports th
 import codecs
 import logging
 from collections import OrderedDict
+import sys
+from itertools import islice
 
 import ujson as js
 
@@ -24,7 +26,8 @@ class BugReportDatabase(object):
         for bug in iterator:
             if bug is None:
                 continue
-
+            #print("First bug", bug)
+            #sys.exit(0)
             bugId = bug["bug_id"]
 
             self.bugById[bugId] = bug
@@ -34,6 +37,9 @@ class BugReportDatabase(object):
 
             if isinstance(description, list) or len(description.strip()) == 0:
                 nEmptyDescription += 1
+        
+        #check if bugs loaded correctly
+        #print(len(self.bugList))
 
         self.logger.info("Number of bugs with empty description: %d" % nEmptyDescription)
 
@@ -41,6 +47,7 @@ class BugReportDatabase(object):
     def fromJson(fileToLoad):
         f = codecs.open(fileToLoad, 'r', encoding='utf-8')
         iterator = map(lambda line: js.loads(line) if len(line.strip()) > 0 else None, f)
+        #iterator = islice(iterator,5)
         return BugReportDatabase(iterator)
 
     def getBug(self, bugId):
