@@ -1,5 +1,5 @@
 {
-    "bug_database": "../dataset/vscode/sea_vscode_soft_clean.json",
+    "bug_database": "../dataset/vscode/vscode_soft_clean.json",
     "database_name": "vscode",
     "epochs": 12,
     "lr": 0.001,
@@ -7,17 +7,17 @@
     "ranking_batch_size": 512,
     "cuda": true,
     "cache_folder": "scratch/temp/",
-    "pairs_training": "../dataset/vscode/training_split_sea_vscode_pairs_random_1.txt",
-    "pairs_validation": "../dataset/vscode/validation_sea_vscode_pairs_random_1.txt",
+    "pairs_training": "../dataset/vscode/training_split_vscode_pairs_random_1.txt",
+    "pairs_validation": "../dataset/vscode/validation_vscode_pairs_random_1.txt",
     "neg_pair_generator": {
         "type": "non_negative",
-        "training": "../dataset/vscode/training_sea_vscode.txt",
+        "training": "../dataset/vscode/training_vscode.txt",
         "n_tries": 15,
         "rate": 1
     },
     "compare_aggregation": {
-        "word_embedding": "word_embedding/vscode/glove_42B_300d_sea_vscode_soft.npy",
-        "lexicon": "word_embedding/vscode/glove_42B_300d_sea_vscode_soft.lxc",
+        "word_embedding": "word_embedding/vscode/glove_42B_300d_vscode_soft.npy",
+        "lexicon": "word_embedding/vscode/glove_42B_300d_vscode_soft.lxc",
         "tokenizer": "white_space",
         "extractor": {
             "model": "linear",
@@ -48,7 +48,7 @@
         }
     },
     "categorical": {
-        "lexicons": "../dataset/vscode/sea_vscode_categorical_lexicons.json",
+        "lexicons": "../dataset/vscode/categorical_lexicons.json",
         "bn_last_layer": false,
         "emb_size": 20,
         "hidden_sizes": [40],
@@ -62,7 +62,7 @@
     "lr_scheduler": null,
     "recall_rate": {
         "type": "sun2011",
-        "dataset": "../dataset/vscode/test_sea_vscode.txt",
+        "dataset": "../dataset/vscode/test_vscode.txt",
         "group_by_master": true,
         "window": 365
     },

@@ -515,7 +515,7 @@ def main(_run, _config, _seed, _log):
     def validationIteration(engine, batch):
         if not hasattr(engine, 'kk'):
             engine.kk = 0
-
+        #this is where the model is evaluated, technically this should be where inference is done on the test data
         model.eval()
 
         with torch.no_grad():
@@ -536,6 +536,8 @@ def main(_run, _config, _seed, _log):
         validationMetrics['validation_acc'] = AccuracyWrapper(output_transform = thresholded_output_transform)
         validationMetrics['validation_precision'] = PrecisionWrapper(output_transform = thresholded_output_transform)
         validationMetrics['validation_recall'] = RecallWrapper(output_transform = thresholded_output_transform)
+
+    #this could be where the training ends
 
     evaluator = Engine(validationIteration)
 
