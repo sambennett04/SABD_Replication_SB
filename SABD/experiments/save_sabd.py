@@ -156,9 +156,10 @@ def cfg():
         "decay": 1,
         "step_size": 1
     }
-    save = None   #change save to desired file path to save the model at that path
+    #change save to desired file path to save the model at
+    save = os.path.join("saved_models", "vscode_saved.pt")
     save_by_epoch = None
-    load = None #possible to load a previously saved model by adding the path here
+    load = None
     recall_rate = {
         'type': 'none',  # 3 options: none, sun2011 and deshmukh
         'dataset': None,
@@ -573,7 +574,10 @@ def main(_run, _config, _seed, _log):
         if not lastEpoch:
             training_reader.sampleNewNegExamples(model, lossNoReduction)
 
+        print(args.get('save'))
+
         if args.get('save'):
+            print("this case was hit!!")
             save_by_epoch = args['save_by_epoch']
 
             if save_by_epoch and epoch in save_by_epoch:
@@ -598,33 +602,3 @@ def main(_run, _config, _seed, _log):
         # Evaluate Training
         evaluator.run(validationLoader)
         logMetrics(_run, logger, evaluator.state.metrics, 0)
-
-    #this is where the training runs
-    #save the model here
-
-    # Calculate recall rate
-    recallRateOpt = args.get('recall_rate', {'type': 'none'})
-    if recallRateOpt['type'] != 'none':
-        if recallRateOpt['type'] == 'sun2011':
-            logger.info("Calculating recall rate: {}".format(recallRateOpt['type']))
-            recallRateDataset = BugDataset(recallRateOpt['dataset'])
-
-            rankingClass = SunRanking(
-                bugReportDatabase, 
-                recallRateDataset, 
-                recallRateOpt['window']
-            )
-            # We always group all bug reports by master in the results in the sun 2011 methodology
-            group_by_master = True
-        else:
-            raise ArgumentError(
-                "recall_rate.type is invalid (%s). You should choose one of these: step, exp and linear " %
-                recallRateOpt['type']
-            )
-
-        logRankingResult(_run, logger, rankingClass, rankingScorer, bugReportDatabase, \
-            recallRateOpt["result_file"], 0, None, group_by_master, recommendationListfn = recommendation_fn)
-
-        end_time = datetime.now()
-        logger.info('It completed at: {}'.format(end_time))
-        logger.info('Completed after: {}'.format(end_time - start_time))
