@@ -103,8 +103,10 @@ class GeneralScorer(object):
 class SunRanking(object):
 
     def __init__(self, bugReportDatabase, dataset, window):
+        #feed in BR database here
         self.bugReportDatabase = bugReportDatabase
         self.masterIdByBugId = self.bugReportDatabase.getMasterIdByBugId()
+        #selects duplicateBugs from list of bugs in dataset, this object comes from bug_dataset.py
         self.duplicateBugs = dataset.duplicateIds
         self.candidates = []
         self.window = int(window) if window is not None else 0
@@ -112,9 +114,10 @@ class SunRanking(object):
         self.logger = logging.getLogger()
 
         # Get oldest and newest duplicate bug report in dataset
+        # tuple comtaining bug id as first element and dict of description, time, etc as second element
         oldestDuplicateBug = (
             self.duplicateBugs[0], 
-            readDateFromBug(self.bugReportDatabase.getBug(self.duplicateBugs[0]))
+            readDateFromBug(self.bugReportDatabase.getBug(self.duplicateBugs[0])) #reads the data from the oldest bug in the test set, gets the bug by id from the database
         )
 
         for dupId in self.duplicateBugs:

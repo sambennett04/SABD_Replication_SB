@@ -43,7 +43,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--json_file', required=True, help="source json file")
     parser.add_argument('--database', required=True, help="dataset name")
-    parser.add_argument('--date', help="Date the start the test dataset and end the training dataset. \
+    parser.add_argument('--date', help="Date to start the test dataset and end the training dataset. \
         Date in the format YYYY/mm/dd (e.g. 2018/02/10).")
     parser.add_argument('--bug_data', required=True, help="File that contains the bug report contents.")
     parser.add_argument('--test', required=True, help="test path file")
@@ -389,6 +389,8 @@ if __name__ == '__main__':
     #sorts bugID tuples by their bug_ids
     sortedBugs = sorted(bugAndDateTuples, key=lambda tup: (tup[0], int(tup[1]['bug_id'])))
 
+    #this is where the test dataset starts to be created
+
     # The index where the test begins
     testBeginIdx = None
 
@@ -404,8 +406,7 @@ if __name__ == '__main__':
     masterAlreadySeen = set()
 
     if args.test_perc > 0:
-        print("hit test perc case")
-        # Split the dataset by a percentage of duplicate bug reports
+        #Split the dataset by a percentage of duplicate bug reports
         duplicateIdxs = []
         logger.info('Split the dataset into training and test using %f/%f .' % \
             (1 - args.test_perc, args.test_perc))
@@ -434,7 +435,6 @@ if __name__ == '__main__':
         testDuplicateReports = [sortedBugs[idx][1] for idx in duplicateIdxs[splitIdx + 1:]]
 
     elif args.test_duplicate_bf > 0:
-        print("hits test duplicate case")
         nm_bug_after_date = args.test_duplicate_bf
 
         if args.without_timezone:
@@ -478,7 +478,7 @@ if __name__ == '__main__':
             else:
                 masterAlreadySeen.add(masterId)
     else:
-        print("hit else case")
+        #this is the case that is hit in the default scenario
         # Split the dataset by a specific date
         if args.without_timezone:
             
@@ -491,7 +491,9 @@ if __name__ == '__main__':
         logger.info('Using %s date to split database into training and test.' \
             % splitDate.strftime('%Y/%m/%d'))
 
+        #goes through all bugs and assigns date and bug to the same itterable
         for idx, (date, bug) in enumerate(sortedBugs):
+            #gets masterid of current bug
             masterId = masterSetIdByBug.get(bug['bug_id'])
 
             #based on splitDate, if bug date is less than specified date, add to trainingReports if greater add to testRepo
@@ -508,6 +510,7 @@ if __name__ == '__main__':
 
             # A report is only considered duplicate when another report from 
             # the same master set has already been retrieved before.
+            # if we have seen the masterid for the bug already then it is a duplicate, append to duplicate list, if we have not seen the masterid yet append the masterid to masterid already seen list for future use
             if masterId in masterAlreadySeen:
                 l.append(bug)
             else:
@@ -579,7 +582,7 @@ if __name__ == '__main__':
 
     saveFile(args.training, info, trainingSplitReports, trainingSplitDuplicate)
     saveFile(args.validation, info, validationReports, validationDuplicate)
-    saveFile(args.test, info, testReports, testDuplicateReports)
+    saveFile(args.test, info, testReports, testDuplicateReports) #save list of reports and duplicaet reports to test file
 
     logger.info('Saving json file')
     

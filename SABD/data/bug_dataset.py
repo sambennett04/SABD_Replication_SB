@@ -8,4 +8,5 @@ class BugDataset(object):
         self.info = f.readline().strip()
 
         self.bugIds = [id for id in f.readline().strip().split()]
+        #reads all ids in test file, these are all duplicates
         self.duplicateIds = [id for id in f.readline().strip().split()]

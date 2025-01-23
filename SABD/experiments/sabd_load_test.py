@@ -233,6 +233,7 @@ def main(_run, _config, _seed, _log):
     cacheFolder = None
 
     # Setting the parameter to save and loading parameters
+    #important parameters saves compare_aggregation information should be able to access it
     importantParameters = ['compare_aggregation', 'categorical']
     parametersToSave = dict([(parName, args[parName]) for parName in importantParameters])
 
@@ -243,8 +244,12 @@ def main(_run, _config, _seed, _log):
         modelInfo = torch.load(args['load'], map_location=mapLocation)
         modelState = modelInfo['model']
 
+        #line below commented out because not neccesary
+        '''
         for paramName, paramValue in modelInfo['params'].items():
             args[paramName] = paramValue
+        '''
+
     else:
         modelState = None
 
@@ -355,85 +360,10 @@ def main(_run, _config, _seed, _log):
 
     if modelState:
         model.load_state_dict(modelState)
+        print("success the model was loaded!!")
 
     """
-    Loading the training and validation. Also, it sets how the negative example will be generated.
-    """
-    # load training
-    if args.get('pairs_training'):
-        negativePairGenOpt = args.get('neg_pair_generator')
-        trainingFile = args.get('pairs_training')
-
-        offlineGeneration = not (negativePairGenOpt is None or negativePairGenOpt['type'] == 'none')
-        masterIdByBugId = bugReportDatabase.getMasterIdByBugId()
-        randomAnchor = negativePairGenOpt['random_anchor']
-
-        if not offlineGeneration:
-            logger.info("Not generate dynamically the negative examples.")
-            negativePairGenerator = None
-        else:
-            pairGenType = negativePairGenOpt['type']
-
-            if pairGenType == 'non_negative':
-                logger.info("Non Negative Pair Generator")
-                trainingDataset = BugDataset(negativePairGenOpt['training'])
-                bugIds = trainingDataset.bugIds
-
-                logger.info(
-                    "Using the following dataset to generate negative examples: %s. Number of bugs in the training: %d" % (
-                        trainingDataset.info, len(bugIds))
-                )
-
-                negativePairGenerator = NonNegativeRandomGenerator(preprocessors, cmp_collate, \
-                    negativePairGenOpt['rate'], bugIds, masterIdByBugId, negativePairGenOpt['n_tries'], \
-                        device, randomAnchor = randomAnchor)
-
-            else:
-                raise ArgumentError(
-                    "Offline generator is invalid (%s). You should choose one of these: random, hard and pre" % pairGenType
-                )
-
-        if isinstance(lossFn, BCELoss):
-            training_reader = PairBugDatasetReader(trainingFile, preprocessors, negativePairGenerator, \
-                randomInvertPair = args['random_switch'])
-        elif isinstance(lossFn, TripletLoss):
-            training_reader = TripletBugDatasetReader(trainingFile, preprocessors, negativePairGenerator, \
-                randomInvertPair = args['random_switch'])
-
-        trainingLoader = DataLoader(
-            training_reader, 
-            batch_size = batchSize, 
-            collate_fn = cmp_collate.collate, 
-            shuffle = True
-        )
-
-        logger.info("Training size: %s" % (len(trainingLoader.dataset)))
-
-    # load validation
-    if args.get('pairs_validation'):
-        if isinstance(lossFn, BCELoss):
-            validation_reader = PairBugDatasetReader(
-                args.get('pairs_validation'), 
-                preprocessors
-            )
-        elif isinstance(lossFn, TripletLoss):
-            validation_reader = TripletBugDatasetReader(
-                args.get('pairs_validation'), 
-                preprocessors
-            )
-
-        validationLoader = DataLoader(
-            validation_reader, 
-            batch_size = batchSize, 
-            collate_fn = cmp_collate.collate
-        )
-
-        logger.info("Validation size: %s" % (len(validationLoader.dataset)))
-    else:
-        validationLoader = None
-
-    """
-    Training and evaluate the model. 
+    evaluate the model. 
     """
     optimizer_opt = args.get('optimizer', 'adam')
 
@@ -454,154 +384,9 @@ def main(_run, _config, _seed, _log):
         args['ranking_n_workers']
     )
 
-    # LR scheduler
-    lrSchedulerOpt = args.get('lr_scheduler', None)
-
-    if lrSchedulerOpt is None:
-        logger.info("Scheduler: Constant")
-        lrSched = None
-    elif lrSchedulerOpt["type"] == 'step':
-        logger.info("Scheduler: StepLR (step:%s, decay:%f)" % (lrSchedulerOpt["step_size"], args["decay"]))
-        lrSched = StepLR(optimizer, lrSchedulerOpt["step_size"], lrSchedulerOpt["decay"])
-    elif lrSchedulerOpt["type"] == 'exp':
-        logger.info("Scheduler: ExponentialLR (decay:%f)" % (lrSchedulerOpt["decay"]))
-        lrSched = ExponentialLR(optimizer, lrSchedulerOpt["decay"])
-    elif lrSchedulerOpt["type"] == 'linear':
-        logger.info("Scheduler: Divide by (1 + epoch * decay) ---- (decay:%f)" % (lrSchedulerOpt["decay"]))
-        lrDecay = lrSchedulerOpt["decay"]
-        lrSched = LambdaLR(optimizer, lambda epoch: 1 / (1.0 + epoch * lrDecay))
-    else:
-        raise ArgumentError(
-            "LR Scheduler is invalid (%s). You should choose one of these: step, exp and linear " %
-            pairGenType
-        )
-
-    # Set training functions
-    def trainingIteration(engine, batch):
-        engine.kk = 0
-        model.train()
-
-        optimizer.zero_grad()
-        x, y = cmp_collate.to(batch, device)
-        output = model(*x)
-        loss = lossFn(output, y)
-        loss.backward()
-        optimizer.step()
-        return loss, output, y
-
-    def scoreDistanceTrans(output):
-        if len(output) == 3:
-            _, y_pred, y = output
-        else:
-            y_pred, y = output
-
-        if lossFn == F.nll_loss:
-            return torch.exp(y_pred[:, 1]), y
-        elif isinstance(lossFn, (BCELoss)):
-            return y_pred, y
-
-    trainer = Engine(trainingIteration)
-    trainingMetrics = {'training_loss': AverageLoss(lossFn)}
-
-    if isinstance(lossFn, BCELoss):
-        trainingMetrics['training_dist_target'] = MeanScoreDistance(output_transform = scoreDistanceTrans)
-        trainingMetrics['training_acc'] = AccuracyWrapper(output_transform = thresholded_output_transform)
-        trainingMetrics['training_precision'] = PrecisionWrapper(output_transform = thresholded_output_transform)
-        trainingMetrics['training_recall'] = RecallWrapper(output_transform = thresholded_output_transform)
-        # Add metrics to trainer
-    for name, metric in trainingMetrics.items():
-        metric.attach(trainer, name)
-
-    # Set validation functions
-    def validationIteration(engine, batch):
-        if not hasattr(engine, 'kk'):
-            engine.kk = 0
-        #this is where the model is evaluated, technically this should be where inference is done on the test data
-        model.eval()
-
-        with torch.no_grad():
-            x, y = cmp_collate.to(batch, device)
-            y_pred = model(*x)
-
-            return y_pred, y
-
-    validationMetrics = {
-        'validation_loss': LossWrapper(
-            lossFn, 
-            output_transform = lambda x: (x[0], x[0][0]) if x[1] is None else x
-        )
-    }
-
-    if isinstance(lossFn, BCELoss):
-        validationMetrics['validation_dist_target'] = MeanScoreDistance(output_transform = scoreDistanceTrans)
-        validationMetrics['validation_acc'] = AccuracyWrapper(output_transform = thresholded_output_transform)
-        validationMetrics['validation_precision'] = PrecisionWrapper(output_transform = thresholded_output_transform)
-        validationMetrics['validation_recall'] = RecallWrapper(output_transform = thresholded_output_transform)
-
-    #this could be where the training ends
-
-    evaluator = Engine(validationIteration)
-
-    # Add metrics to evaluator
-    for name, metric in validationMetrics.items():
-        metric.attach(evaluator, name)
-
-    # recommendation
+    #recomendation
     recommendation_fn = generateRecommendationList
-
-    @trainer.on(Events.EPOCH_STARTED)
-    def onStartEpoch(engine):
-        epoch = engine.state.epoch
-        logger.info("Epoch: %d" % epoch)
-
-        if lrSched:
-            lrSched.step()
-
-        logger.info("LR: %s" % str(optimizer.param_groups[0]["lr"]))
-
-    @trainer.on(Events.EPOCH_COMPLETED)
-    def onEndEpoch(engine):
-        epoch = engine.state.epoch
-
-        logMetrics(_run, logger, engine.state.metrics, epoch)
-
-        # Evaluate Training
-        if validationLoader:
-            evaluator.run(validationLoader)
-            logMetrics(_run, logger, evaluator.state.metrics, epoch)
-
-        lastEpoch = args['epochs'] - epoch == 0
-
-        if not lastEpoch:
-            training_reader.sampleNewNegExamples(model, lossNoReduction)
-
-        if args.get('save'):
-            save_by_epoch = args['save_by_epoch']
-
-            if save_by_epoch and epoch in save_by_epoch:
-                file_name, file_extension = os.path.splitext(args['save'])
-                file_path = file_name + '_epoch_{}'.format(epoch) + file_extension
-            else:
-                #the value of save should be a file path
-                file_path = args['save']
-
-            modelInfo = {
-                'model': model.state_dict(),
-                'params': parametersToSave
-            }
-
-            logger.info("==> Saving Model: %s" % file_path)
-            #this saves both the state_dict and tbe parameters of the model at the specified file path
-            torch.save(modelInfo, file_path)
-
-    if args.get('pairs_training'):
-        trainer.run(trainingLoader, max_epochs=args['epochs'])
-    elif args.get('pairs_validation'):
-        # Evaluate Training
-        evaluator.run(validationLoader)
-        logMetrics(_run, logger, evaluator.state.metrics, 0)
-
-    #this is where the training runs
+    
     #save the model here
 
     # Calculate recall rate
@@ -627,8 +412,7 @@ def main(_run, _config, _seed, _log):
                 "recall_rate.type is invalid (%s). You should choose one of these: step, exp and linear " %
                 recallRateOpt['type']
             )
-        
-        # ranking Scorer contains the model, that is how it is passed to the recall rate calculation
+
         logRankingResult(_run, logger, rankingClass, rankingScorer, bugReportDatabase, \
             recallRateOpt["result_file"], 0, None, group_by_master, recommendationListfn = recommendation_fn)
 
