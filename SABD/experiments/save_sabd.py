@@ -156,9 +156,10 @@ def cfg():
         "decay": 1,
         "step_size": 1
     }
-    save = None   #change save to desired file path to save the model at that path
+    #change save to desired file path to save the model at
+    save = os.path.join("saved_models", "vscode_saved.pt")
     save_by_epoch = None
-    load = os.path.join("saved_models", "vscode_saved.pt") #possible to load a previously saved model by adding the path here (initially None)
+    load = None
     recall_rate = {
         'type': 'none',  # 3 options: none, sun2011 and deshmukh
         'dataset': None,
@@ -236,10 +237,8 @@ def main(_run, _config, _seed, _log):
     importantParameters = ['compare_aggregation', 'categorical']
     parametersToSave = dict([(parName, args[parName]) for parName in importantParameters])
 
-    #error from loading in old model and changing model parameters after load
     if args['load'] is not None:
         mapLocation = (lambda storage, loc: storage.cuda()) if args['cuda'] else 'cpu'
-        #map_location is what selects between run on cuda or run on cpu
         modelInfo = torch.load(args['load'], map_location=mapLocation)
         modelState = modelInfo['model']
 
@@ -575,7 +574,10 @@ def main(_run, _config, _seed, _log):
         if not lastEpoch:
             training_reader.sampleNewNegExamples(model, lossNoReduction)
 
+        print(args.get('save'))
+
         if args.get('save'):
+            print("this case was hit!!")
             save_by_epoch = args['save_by_epoch']
 
             if save_by_epoch and epoch in save_by_epoch:
@@ -600,38 +602,3 @@ def main(_run, _config, _seed, _log):
         # Evaluate Training
         evaluator.run(validationLoader)
         logMetrics(_run, logger, evaluator.state.metrics, 0)
-
-    #this is where the training runs
-    #save the model here
-
-    # Calculate recall rate
-    recallRateOpt = args.get('recall_rate', {'type': 'none'})
-    if recallRateOpt['type'] != 'none':
-        if recallRateOpt['type'] == 'sun2011':
-            logger.info("Calculating recall rate: {}".format(recallRateOpt['type']))
-            #this is where the test dataset is selected from the overall database, it contains a list of bug ids, so you can locate the bug reports that are assigned to the test set
-            recallRateDataset = BugDataset(recallRateOpt['dataset'])
-
-            #the bug database here is set in the json_params file, it is the soft_cleaned version of the intial input expl vscode_soft_clean.json
-            #we should be able to change the list of test bugs and the buReportDatabase in sun ranking to a json file of our bugs and a test set of our bugs
-            #below is from a class in ranking.py 
-            rankingClass = SunRanking(
-                bugReportDatabase, 
-                recallRateDataset, 
-                recallRateOpt['window']
-            )
-            # We always group all bug reports by master in the results in the sun 2011 methodology
-            group_by_master = True
-        else:
-            raise ArgumentError(
-                "recall_rate.type is invalid (%s). You should choose one of these: step, exp and linear " %
-                recallRateOpt['type']
-            )
-        
-        # ranking Scorer contains the model, that is how it is passed to the recall rate calculation
-        logRankingResult(_run, logger, rankingClass, rankingScorer, bugReportDatabase, \
-            recallRateOpt["result_file"], 0, None, group_by_master, recommendationListfn = recommendation_fn)
-
-        end_time = datetime.now()
-        logger.info('It completed at: {}'.format(end_time))
-        logger.info('Completed after: {}'.format(end_time - start_time))

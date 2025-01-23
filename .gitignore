@@ -208,3 +208,9 @@ src/data/vscode_htmls/
 REP/Feb-2022-submission/
 src/state-bias/*.json
 REP/dataset/
+
+#ignoring saved_models folder
+SABD/saved_models/
+
+#ignoring model outputs
+SABD/model_outputs/

@@ -80,6 +80,7 @@ def logRankingResult(expRun, logger, rankingClass, rankingScorer, bugReportDatab
             recommendation = candidates
         else:
             recommendation = recommendationListfn(duplicateBugId, candidates, rankingScorer)
+            #this line calculates the recommendation from the model for querry and candidates
 
         # Update the metrics
         pos, correct_cand = recallRateMetric.update(duplicateBugId, recommendation)
