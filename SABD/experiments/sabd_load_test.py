@@ -48,6 +48,7 @@ ex.logger = logger
 @ex.config
 def cfg():
     # Set here all possible parameters; You have to change some parameters values.
+    test_bug_database = None
     bug_database = None
     database_name = None
     epochs = 20
@@ -217,6 +218,12 @@ def main(_run, _config, _seed, _log):
     logger.info('It started at: %s' % start_time)
 
     torch.manual_seed(_seed)
+    #for the file that just runs the trained model on the test set, we are going to change this bugReportDatabase to the test set json file in the args
+    
+    #add test set database
+    test_set_database = BugReportDatabase.fromJson(args['test_bug_database'])
+    #print(test_set_database.bugList)
+    
     bugReportDatabase = BugReportDatabase.fromJson(args['bug_database'])
     paddingSym = "</s>"
     batchSize = args['batch_size']
@@ -304,6 +311,7 @@ def main(_run, _config, _seed, _log):
         )
 
     # Preparing input handlers, preprocessors and cache
+    #set based on inputs from the json_param file, set tp -1 because the model is not cnn
     minSeqSize = max(compareAggOpt['aggregate']["window"]) if compareAggOpt['aggregate']["model"] == "cnn" else -1
     bow = compareAggOpt.get('bow', False)
     freq = compareAggOpt.get('frequency', False) and bow
@@ -325,7 +333,7 @@ def main(_run, _config, _seed, _log):
 
         extractorPreprocessor = SABDEncoderPreprocessor(
             lexicon, 
-            bugReportDatabase, 
+            test_set_database, 
             extractorFilters, 
             tokenizer, 
             paddingId, 
@@ -377,8 +385,8 @@ def main(_run, _config, _seed, _log):
     # Recall rate
     rankingScorer = GeneralScorer(
         model, 
-        preprocessors, 
-        device,
+        preprocessors, #preprocessors used here to extract
+        device, #this will always be cuda
         PairBugCollate(inputHandlers, ignore_target=True),
         args['ranking_batch_size'], 
         args['ranking_n_workers']
@@ -387,7 +395,7 @@ def main(_run, _config, _seed, _log):
     #recomendation
     recommendation_fn = generateRecommendationList
     
-    #save the model here
+    
 
     # Calculate recall rate
     recallRateOpt = args.get('recall_rate', {'type': 'none'})
@@ -401,7 +409,7 @@ def main(_run, _config, _seed, _log):
             #we should be able to change the list of test bugs and the buReportDatabase in sun ranking to a json file of our bugs and a test set of our bugs
             #below is from a class in ranking.py 
             rankingClass = SunRanking(
-                bugReportDatabase, 
+                test_set_database, 
                 recallRateDataset, 
                 recallRateOpt['window']
             )
@@ -413,7 +421,7 @@ def main(_run, _config, _seed, _log):
                 recallRateOpt['type']
             )
 
-        logRankingResult(_run, logger, rankingClass, rankingScorer, bugReportDatabase, \
+        logRankingResult(_run, logger, rankingClass, rankingScorer, test_set_database, \
             recallRateOpt["result_file"], 0, None, group_by_master, recommendationListfn = recommendation_fn)
 
         end_time = datetime.now()
