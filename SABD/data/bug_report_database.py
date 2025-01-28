@@ -39,9 +39,10 @@ class BugReportDatabase(object):
                 nEmptyDescription += 1
         
         #check if bugs loaded correctly
-        #print(len(self.bugList))
 
         self.logger.info("Number of bugs with empty description: %d" % nEmptyDescription)
+
+        #print("################", self.bugById)
 
     @staticmethod
     def fromJson(fileToLoad):
@@ -51,8 +52,10 @@ class BugReportDatabase(object):
         return BugReportDatabase(iterator)
 
     def getBug(self, bugId):
-        return self.bugById[bugId]
-
+        print("the object type of the bugId is ", type(bugId))
+        print("the bug id that just succeeded is ", bugId)
+        return self.bugById[bugId] 
+    
     def getBugByIndex(self, idx):
         return self.bugList[idx]
 

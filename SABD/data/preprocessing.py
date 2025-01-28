@@ -227,7 +227,7 @@ def loadFilters(filterNames):
 
 
 class PreprocessingCache(object):
-
+    #dictionary cache for bugs
     def __init__(self, folder=None, args=None):
         self.cache = {}
 
@@ -320,7 +320,7 @@ class Preprocessor(object):
         ftrs = self.cache.get(bugId)
 
         if ftrs is None:
-            ftrs = self._extract(self.database.getBug(bugId))
+            ftrs = self._extract(self.database.getBug(bugId)) #this gets a bug using its id from a bug database
             self.cache.add(bugId, ftrs)
 
         return ftrs
@@ -337,6 +337,7 @@ class SABDEncoderPreprocessor(Preprocessor):
         self.field_padding_idx = field_padding_idx
         logger = logging.getLogger()
         logger.info("Summary and Description: tokenizer class= %s" % tokenizer.__class__.__name__)
+        print("SABDEncoder was created!")
 
         self._storeCache()
 

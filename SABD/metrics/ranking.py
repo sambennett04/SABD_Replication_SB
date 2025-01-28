@@ -71,6 +71,7 @@ class GeneralScorer(object):
         self.model.to(self.device)
 
         similarityScores = []
+        #extract the candidate bug_report id from the preprocessing object
         candidate_bug = self.preprocessingList.extract(candidate_id)
         self.rankingdata.reset(candidate_bug, bug_ids)
 
@@ -128,6 +129,7 @@ class SunRanking(object):
                 oldestDuplicateBug = (dupId, creationDate)
 
         # Keep only master that are able to be candidate
+        #This is where the threshold is set for candidate bugs, does not include bugs older than the oldest duplicate
         for bug in self.bugReportDatabase.bugList:
             bugCreationDate = readDateFromBug(bug)
             bugId = bug['bug_id']
@@ -152,6 +154,7 @@ class SunRanking(object):
             self.latestDateByMasterSetId[masterId] = ts_list
 
         # Set all bugs that are going to be used by our models.
+        #goes through tuple that is self.candidates and adds each bugId in candidates to the list of allBugs
         self.allBugs = [bugId for bugId, bugCreationDate in self.candidates]
         self.allBugs.extend(self.duplicateBugs)
 
@@ -167,6 +170,7 @@ class SunRanking(object):
         anchorCreationDate = readDateFromBug(anchor)
         anchorMasterId = self.masterIdByBugId[anchorId]
         nDupBugs = 0
+        #this anchor timestamp, is the anchor of the current querry bug
         anchorTimestamp = anchorCreationDate.timestamp()
         anchorDayTimestamp = int(anchorTimestamp / (24 * 60 * 60))
 
@@ -246,6 +250,7 @@ class SunRanking(object):
         if nDupBugs == 0:
             return []
 
+        print("candidates for {fbugId} are {fcandidates}".format(fbugId = anchorId, fcandidates = candidates))
         return candidates
 
 

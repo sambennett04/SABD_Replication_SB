@@ -85,7 +85,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # Global arguments
-    parser.add_argument('--training', required=True, help="")
+    #removed training argument, not needed for creating a word embedding out of a json file that represents just a test set
+    #parser.add_argument('--training', required=True, help="")
     parser.add_argument('--bug_database', required=True, help="")
     parser.add_argument('--output', required=True, help="The word embedding file with new words.")
     parser.add_argument('--filters', nargs='+', help='Filter Names to be used in the summary', default=['TransformLowerCaseFilter', 'TransformNumberToZeroFilter'])
@@ -110,11 +111,11 @@ if __name__ == '__main__':
     logger.info("Loading bug reports")
     bugReportDatabase = BugReportDatabase.fromJson(args.bug_database)
 
-    logger.info("Loading training dataset") #set of all bugs in training set
-    training = BugDataset(args.training)
+    #logger.info("Loading training dataset") #set of all bugs in training set
+    #training = BugDataset(args.training)
     
-    #limit data is the last bugId in the training set before the test set starts
-    limitDate = readDateFromBug(bugReportDatabase.getBug(training.bugIds[-1]))
+    #limit data is the date of the last bugId in the training set 
+    #limitDate = readDateFromBug(bugReportDatabase.getBug(training.bugIds[-1]))
 
 
     filters = loadFilters(args.filters)
@@ -144,7 +145,7 @@ if __name__ == '__main__':
         creationDate = readDateFromBug(bug)
 
         if creationDate > limitDate:
-            if firstBugNotUsed is None: #prints first bug not used for training
+            if firstBugNotUsed is None: #prints first bug not used 
                 firstBugNotUsed = bug['bug_id']
                 print("First bug not used: %s" % firstBugNotUsed)
 

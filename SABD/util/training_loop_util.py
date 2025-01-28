@@ -57,13 +57,16 @@ def logRankingResult(expRun, logger, rankingClass, rankingScorer, bugReportDatab
     rankingResultFile = RankingResultFile(rankingResultFilePath, bugReportDatabase) if rankingResultFilePath else None
 
     start_time = time()
-    rankingScorer.pregenerateBugEmbedding(rankingClass.getAllBugs())
+    rankingScorer.pregenerateBugEmbedding(rankingClass.getAllBugs()) #this just passes
 
-    rankingScorer.reset()
+    rankingScorer.reset() #this just passes
 
     positions = []
 
+    #itterates through all duplicate bugs in test set
+    #starts with first duplicate bug
     for i, duplicateBugId in enumerate(rankingClass.getDuplicateBugs()):
+        #gets all candidates for a duplicate bug
         candidates = rankingClass.getCandidateList(duplicateBugId)
 
         if i > 0 and i % 500 == 0:
@@ -79,8 +82,10 @@ def logRankingResult(expRun, logger, rankingClass, rankingScorer, bugReportDatab
 
             recommendation = candidates
         else:
+            #recomendation list fn is generateRecomendationList
             recommendation = recommendationListfn(duplicateBugId, candidates, rankingScorer)
             #this line calculates the recommendation from the model for querry and candidates
+            #the rankingScorer is used here for its score function, whihc needs preprocessors just to get bug by id from the dataset
 
         # Update the metrics
         pos, correct_cand = recallRateMetric.update(duplicateBugId, recommendation)
