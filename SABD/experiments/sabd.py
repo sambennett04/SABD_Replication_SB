@@ -158,9 +158,7 @@ def cfg():
     }
     save = None   #change save to desired file path to save the model at that path
     save_by_epoch = None
-    load = None #possible to load a previously saved model by adding the path here (initially None)
-    #os.path.join("saved_models", "vscode_saved.pt")
-    #Example Load: os.path.join("saved_models", "vscode_saved.pt")
+    load = None #possible to load a previously saved model by adding the path here (initially None) Example: os.path.join("saved_models", "vscode_saved.pt")
     recall_rate = {
         'type': 'none',  # 3 options: none, sun2011 and deshmukh
         'dataset': None,

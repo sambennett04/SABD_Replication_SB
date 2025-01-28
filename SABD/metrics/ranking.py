@@ -249,7 +249,8 @@ class SunRanking(object):
 
         if nDupBugs == 0:
             return []
-
+        
+        #move to log ranking results
         print("candidates for {fbugId} are {fcandidates}".format(fbugId = anchorId, fcandidates = candidates))
         return candidates
 

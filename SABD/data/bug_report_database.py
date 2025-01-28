@@ -42,8 +42,6 @@ class BugReportDatabase(object):
 
         self.logger.info("Number of bugs with empty description: %d" % nEmptyDescription)
 
-        #print("################", self.bugById)
-
     @staticmethod
     def fromJson(fileToLoad):
         f = codecs.open(fileToLoad, 'r', encoding='utf-8')
@@ -52,8 +50,8 @@ class BugReportDatabase(object):
         return BugReportDatabase(iterator)
 
     def getBug(self, bugId):
-        print("the object type of the bugId is ", type(bugId))
-        print("the bug id that just succeeded is ", bugId)
+        #print("the object type of the bugId is ", type(bugId))
+        #print("the bug id that just succeeded is ", bugId)
         return self.bugById[bugId] 
     
     def getBugByIndex(self, idx):
