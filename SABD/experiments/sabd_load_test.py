@@ -267,7 +267,7 @@ def main(_run, _config, _seed, _log):
     
     #change the test_set_database here back to bugreportdatabase
     if categoricalOpt is not None and len(categoricalOpt) != 0:
-        categoricalEncoder, _, _ = processCategoricalParam(categoricalOpt, test_set_database, \
+        categoricalEncoder, _, _ = processCategoricalParam(categoricalOpt, bugReportDatabase, \
             inputHandlers, preprocessors, None, logger)
     else:
         categoricalEncoder = None
@@ -334,7 +334,7 @@ def main(_run, _config, _seed, _log):
 
         extractorPreprocessor = SABDEncoderPreprocessor(
             lexicon, 
-            test_set_database, 
+            bugReportDatabase, 
             extractorFilters, 
             tokenizer, 
             paddingId, 
@@ -410,7 +410,7 @@ def main(_run, _config, _seed, _log):
             #we should be able to change the list of test bugs and the buReportDatabase in sun ranking to a json file of our bugs and a test set of our bugs
             #below is from a class in ranking.py 
             rankingClass = SunRanking(
-                test_set_database, #this needs to be initial BugReportDatabase, if we want to train the model on our bugs, because it is possible for a querry to have a duplicate in the training set and thus reach back into the training set for that bug id
+                bugReportDatabase, #this needs to be initial BugReportDatabase, if we want to train the model on our bugs, because it is possible for a querry to have a duplicate in the training set and thus reach back into the training set for that bug id
                 recallRateDataset, 
                 recallRateOpt['window']
             )
@@ -422,7 +422,7 @@ def main(_run, _config, _seed, _log):
                 recallRateOpt['type']
             )
         #revert this to originial bugreportdatabase and make that database the bugreport database made from our json files aswell, same as test set
-        logRankingResult(_run, logger, rankingClass, rankingScorer, test_set_database, \
+        logRankingResult(_run, logger, rankingClass, rankingScorer, bugReportDatabase, \
             recallRateOpt["result_file"], 0, None, group_by_master, recommendationListfn = recommendation_fn)
 
         end_time = datetime.now()

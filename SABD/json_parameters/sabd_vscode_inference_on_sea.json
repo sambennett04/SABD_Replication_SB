@@ -1,6 +1,6 @@
 {
     "test_bug_database": "../dataset/andOTP/andOTPSabd.jsonl",
-    "bug_database": "../dataset/vscode/vscode_soft_clean.json",
+    "bug_database": "../dataset/andOTP/andOTPSabd.jsonl",
     "database_name": "vscode",
     "epochs": 12,
     "lr": 0.001,
@@ -65,7 +65,7 @@
         "type": "sun2011",
         "dataset": "../dataset/andOTP/test_andOTP.txt",
         "group_by_master": true,
-        "window": 1095
+        "window": 365
     },
     "random_switch": true,
     "rr_scorer":"general"

@@ -227,6 +227,7 @@ class SunRanking(object):
                 newest_report = bugId
 
             # Is it in the window?
+            #investigate how the window functions with test set candidates
             if 0 < self.window < (anchorDayTimestamp - bug_timestamp):
                 nSkipped += 1
                 continue
