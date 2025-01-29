@@ -214,3 +214,6 @@ SABD/saved_models/
 
 #ignoring model outputs
 SABD/model_outputs/
+
+#ignoring data csv
+data_processing/SEA_Lab_Data_And_Duplicate_Information.csv
