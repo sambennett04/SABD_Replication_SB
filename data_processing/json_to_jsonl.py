@@ -2,10 +2,11 @@ import json
 import os
 import re
 import pandas as pd
+import sys
 
 
 project_path = "/scratch/projects/sam/repos/SABD_Replication_SB/dataset/andOTP"
-path_to_jsonl_file = "../dataset/andOTP/andOTP_test.jsonl"
+path_to_jsonl_file = "../dataset/andOTP/andOTP.jsonl"
 path_to_duplicate_csv = "/scratch/projects/sam/repos/SABD_Replication_SB/data_processing/SEA_Lab_Data_And_Duplicate_Information.csv"
 project_name = "andOTP"
 
@@ -19,6 +20,9 @@ if __name__ == '__main__':
     #itterate through each path, until no more files in the folder
     #change path_to_json_file each time
     bug_reports = os.listdir(project_path)
+    print(len(bug_reports))
+    sys.exit(0)
+
     for bug_report in bug_reports:
         path_to_report = os.path.join(project_path,bug_report)
 
@@ -38,11 +42,18 @@ if __name__ == '__main__':
         #find dup_id for bug_id
         #populate dup_id field of jsonl_dictionary
         duplicate_csv = pd.read_csv(path_to_duplicate_csv)
-        curr_corresponding_row = duplicate_csv[((duplicate_csv['Repository_Name'] == project_name) and (duplicate_csv['Issue_Number'] == data['number']))]
-        print(curr_corresponding_row)
+        project_reports = duplicate_csv[duplicate_csv["Repository_Name"] == "andOTP"]
+        curr_corresponding_row = project_reports[project_reports["Issue_Number"] == data['number']]
+        
+        #this is done because csv index is maintained even in filtered data frame, need exact index for look up
+        csv_index = curr_corresponding_row.index[0]
+        curr_dup_id = curr_corresponding_row.loc[csv_index][10]
+        if curr_dup_id[0] == '#':
+            curr_dup_id = curr_dup_id[1:]
 
-        jsonl_dictionary = {'bug_id': str(data['number']),'creation_ts':creation_ts,'short_desc':data['title'],'product':"",'component':"",'version':"",'bug_status':data['state'],'priority':"",'bug_severity':"", 'description':data['body'],'dup_id':"list with one element, the bug id"}
+        jsonl_dictionary = {'bug_id': str(data['number']),'creation_ts':creation_ts,'short_desc':data['title'],'product':"",'component':"",'version':"",'bug_status':data['state'],'priority':"",'bug_severity':"", 'description':data['body'],'dup_id':(curr_dup_id if curr_dup_id != "[]" else [])}
         jsonl_dictionary_list.append(jsonl_dictionary)
+        print("issue ", str(data['number']), " processed")
         json_file.close()
 
     #for each dictionary within jsonl_dictionary create a new json object and add to jsonl file
