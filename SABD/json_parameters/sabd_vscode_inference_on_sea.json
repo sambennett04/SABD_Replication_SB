@@ -1,6 +1,6 @@
 {
-    "test_bug_database": "../dataset/andOTP/andOTPSabd.jsonl",
-    "bug_database": "../dataset/andOTP/andOTPSabd.jsonl",
+    "test_bug_database": "../dataset/andOTP/andOTP.jsonl",
+    "bug_database": "../dataset/andOTP/andOTP.jsonl",
     "database_name": "vscode",
     "epochs": 12,
     "lr": 0.001,

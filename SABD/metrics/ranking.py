@@ -114,7 +114,7 @@ class SunRanking(object):
         self.latestDateByMasterSetId = {}
         self.logger = logging.getLogger()
 
-        # Get oldest and newest duplicate bug report in dataset
+        # Get oldest bug id and oldest bug information from test set duplicate bugs
         # tuple comtaining bug id as first element and dict of description, time, etc as second element
         oldestDuplicateBug = (
             self.duplicateBugs[0], 
@@ -127,6 +127,8 @@ class SunRanking(object):
 
             if oldestDuplicateBug[1] < creationDate:
                 oldestDuplicateBug = (dupId, creationDate)
+
+        print("oldest duplicate bug is ", oldestDuplicateBug, "\n\n")
 
         # Keep only master that are able to be candidate
         #This is where the threshold is set for candidate bugs, does not include bugs older than the oldest duplicate
@@ -228,11 +230,14 @@ class SunRanking(object):
 
             # Is it in the window?
             #investigate how the window functions with test set candidates
+            #if the gap between bugs is greater than one year, dont consider it a candidate
+            #anchorDayTimestamp is the creation time of the current querry we are fetching candidates for
             if 0 < self.window < (anchorDayTimestamp - bug_timestamp):
                 nSkipped += 1
                 continue
 
             # Count number of duplicate bug reports
+            #if the masterId of the querry, equal the master Id of the candidate, update duplicate bugs
             if anchorMasterId == masterId:
                 nDupBugs += 1
 
@@ -248,6 +253,7 @@ class SunRanking(object):
         if window_record is not None:
             self.logger.debug("{}".format(window_record))
 
+        #if the number of duplicate bugs is zero, return an empty candidate list, if there is no correct math within the candidates, dont create a candidate list or evalutate the current querry with the model
         if nDupBugs == 0:
             return []
         

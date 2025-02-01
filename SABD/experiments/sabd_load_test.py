@@ -221,7 +221,7 @@ def main(_run, _config, _seed, _log):
     #for the file that just runs the trained model on the test set, we are going to change this bugReportDatabase to the test set json file in the args
     
     #add test set database
-    test_set_database = BugReportDatabase.fromJson(args['test_bug_database'])
+    #test_set_database = BugReportDatabase.fromJson(args['test_bug_database'])
     #print(test_set_database.bugList)
     
     bugReportDatabase = BugReportDatabase.fromJson(args['bug_database'])
