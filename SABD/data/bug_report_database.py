@@ -95,12 +95,12 @@ class BugReportDatabase(object):
             dupId = bug['dup_id']
 
             if len(dupId) != 0:
-                masterSet = masterSetById.get(dupId, set())
+                masterSet = masterSetById.get(dupId, set()) #if populated add dupId of current bug, if not populated return empty set
 
                 if len(masterSet) == 0:
-                    masterSetById[dupId] = masterSet
+                    masterSetById[dupId] = masterSet #add current dupId to masterSet
 
-                masterSet.add(bug['bug_id'])
+                masterSet.add(bug['bug_id'])#add the current bug_id to master set
 
         # Insert id of the master bugs in your master sets
         for masterId, masterSet in masterSetById.items():
