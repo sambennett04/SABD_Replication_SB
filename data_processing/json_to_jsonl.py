@@ -20,6 +20,16 @@ if __name__ == '__main__':
     project_name = args.project_name
     path_to_jsonl_file = os.path.join(project_path,(project_name + ".jsonl"))
 
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger()
+
+    logger.addHandler(logging.StreamHandler())
+    os.makedirs('./log', exist_ok=True)
+    fileHandler = logging.FileHandler('./log/json_to_jsonl_{}.log'.format(project_name))
+    logger.addHandler(fileHandler)
+
+    logger.info(args)
+
     #saving each bug report in a dictionary, it will be a dictionary of dictionaries, the key will be the bug_report and the value will be all necessary fields for the jsonl file
     jsonl_dictionary_list = []
 
@@ -29,6 +39,8 @@ if __name__ == '__main__':
     #change path_to_json_file each time
     bug_reports = os.listdir(project_path)
 
+    logger.info("Extracting important fields from json issues in project {}".format(project_name))
+
     for bug_report in bug_reports:
         path_to_report = os.path.join(project_path,bug_report)
 
@@ -37,7 +49,7 @@ if __name__ == '__main__':
             with open(path_to_report, 'r') as json_file:
                 data = json.load(json_file)
         except FileNotFoundError:
-                print("error, file not found")
+                logger.error("Error: input issue report {} file not found".format(path_to_report))
         #need to process creation ts into right format before adding to dictionary
         split_created_at = re.split(r"[TZ]", data['created_at'])
         creation_ts = split_created_at[0] + " " + split_created_at[1] + " " + "+0000"  
@@ -68,17 +80,18 @@ if __name__ == '__main__':
 
         jsonl_dictionary = {'bug_id': str(data['number']),'creation_ts':creation_ts,'short_desc':data['title'],'product':"",'component':"",'version':"",'bug_status':data['state'],'priority':"",'bug_severity':"", 'description':data['body'],'dup_id':curr_dup_id}
         jsonl_dictionary_list.append(jsonl_dictionary)
-        print("issue ", str(data['number']), " processed")
+        logger.info("issue {} processed".format(data['number']))
         json_file.close()
 
     #for each dictionary within jsonl_dictionary create a new json object and add to jsonl file
+    logger.info("writing to jsonl file at path {}".format(path_to_jsonl_file))
     try:
         with open(path_to_jsonl_file, 'w') as jsonl_file:
             for dict in jsonl_dictionary_list:
                 jout = json.dumps(dict) + '\n'
                 jsonl_file.write(jout)
     except FileNotFoundError:
-        print("error file not found")
+        logger.error("Output file not created")
 
         jsonl_file.close()
 
