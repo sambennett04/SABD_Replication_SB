@@ -1,5 +1,5 @@
 {
-    "test_bug_database": "../dataset/andOTP/andOTP.jsonl",
+    "test_bug_database": "../dataset/andOTP/andOTP_soft_clean.jsonl",
     "bug_database": "../dataset/andOTP/andOTP.jsonl",
     "database_name": "vscode",
     "epochs": 12,
