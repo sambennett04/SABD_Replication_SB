@@ -41,20 +41,14 @@ def saveFile(path, info, reports, duplicate_reports):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('--json_file', required=True, help="source json file")
-    parser.add_argument('--database', required=True, help="dataset name")
-    '''
-    parser.add_argument('--date', help="Date to start the test dataset and end the training dataset. \
-        Date in the format YYYY/mm/dd (e.g. 2018/02/10).")
-    '''
+    #variable that concatenates name of json file from project path and project name
+    #parser.add_argument('--json_file', required=True, help="source json file")
+    parser.add_argument('--project_name', required=True, help="project name")
+    parser.add_argument('--project_path', required=True, help="path for current project")
     '''
     parser.add_argument('--bug_data', required=True, help="File that contains the bug report contents.")
     '''
-    parser.add_argument('--test', required=True, help="test path file")
-    '''
-    parser.add_argument('--training', required=True, help="training path file")
-    parser.add_argument('--validation', required=True, help="validation path file")
-    '''
+    #parser.add_argument('--test', required=True, help="test path file")
     parser.add_argument('--keep_master', action="store_true", 
     help="If this option is enable, "
     "so the original master of a set is not changed. "
@@ -77,11 +71,12 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    PROJECT = args.database
+    PROJECT = args.project_name
     
-    os.makedirs('./dataset/{}'.format(PROJECT), exist_ok=True)
+    #os.makedirs('./dataset/{}'.format(PROJECT), exist_ok=True)
 
-    json_file = args.json_file
+    #json_file = args.json_file
+    json_file = os.path.join(args.project_path, (PROJECT + ".jsonl"))
     
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger()
@@ -104,7 +99,7 @@ if __name__ == '__main__':
     bugById = {}
 
     # Info
-    info = "Database: %s; " % args.database
+    info = "Database: %s; " % args.project_name
     info += "Order by Date; "
     info += 'Kept the original master report; ' if args.keep_master else 'Master report is the newest one'
     info += "We keep nested master reports; " if args.no_tree else "We didn't merge nested master reports"
@@ -414,120 +409,49 @@ if __name__ == '__main__':
     # Check if a report from a master set was already retrieved
     masterAlreadySeen = set()
 
-    if args.test_perc > 0:
-        #Split the dataset by a percentage of duplicate bug reports
-        duplicateIdxs = []
-        logger.info('Split the dataset into training and test using %f/%f .' % \
-            (1 - args.test_perc, args.test_perc))
-
-        for idx, (date, bug) in enumerate(sortedBugs):
-            masterId = masterSetIdByBug.get(bug['bug_id'])
-
-            if masterId is None:
-                # It is not duplicate or it is not master report that contains duplicate reports
-                continue
-
-            if masterId in masterAlreadySeen:
-                duplicateIdxs.append(idx)
-            else:
-                masterAlreadySeen.add(masterId)
-
-        # Find the indices of the list of duplicate reports that correctly split the dataset
-        splitIdx = int((1 - args.test_perc) * len(duplicateIdxs))
-        testBeginIdx = duplicateIdxs[splitIdx] + 1
-
-        # Spliting the dataset
-        trainingReports = [bug for date, bug in sortedBugs[:testBeginIdx]]
-        trainingDuplicateReports = [sortedBugs[idx][1] for idx in duplicateIdxs[:splitIdx + 1]]
-
-        testReports = [bug for date, bug in sortedBugs[testBeginIdx:]]
-        testDuplicateReports = [sortedBugs[idx][1] for idx in duplicateIdxs[splitIdx + 1:]]
-
-    elif args.test_duplicate_bf > 0:
-        nm_bug_after_date = args.test_duplicate_bf
-
-        if args.without_timezone:
-            start_cound_dt = datetime.strptime(args.test_dt_start_count, '%Y/%m/%d')
-        else:
-            start_cound_dt = datetime.strptime(args.test_dt_start_count + " +0000", '%Y/%m/%d %z')
-        logger.info(
-            'Split test and tranining using {} after {}'.format( \
-                args.test_duplicate_bf, args.test_dt_start_count))
-
-        trainingReports = []
-        trainingDuplicateReports = []
-        nm_duplicate = 0
-
-        if not args.without_timezone:
-            logger.warning("Be careful with the timezone {} ".format(start_cound_dt.strftime(
-                "%m/%d/%Y, %H:%M:%S %z")))
-
-        for idx, (date, bug) in enumerate(sortedBugs):
-            masterId = masterSetIdByBug.get(bug['bug_id'])
-
-            if date < start_cound_dt or nm_duplicate < nm_bug_after_date:
-                trainingReports.append(bug)
-                l = trainingDuplicateReports
-            else:
-                testReports.append(bug)
-                l = testDuplicateReports
-
-            if masterId is None:
-                # It is not duplicate or it is not master report that contains duplicate reports
-                continue
-
-            # A report is only considered duplicate when another report from the 
-            # same master set has already been retrieved before.
-            if masterId in masterAlreadySeen:
-                l.append(bug)
-
-                if date >= start_cound_dt:
-                    nm_duplicate += 1
-
-            else:
-                masterAlreadySeen.add(masterId)
+    # Split the dataset by a specific date, removed as we are not splitting into training and test, only creating test
+    '''
+    if args.without_timezone:
+        splitDate = datetime.strptime(args.date, '%Y/%m/%d')
     else:
-        #this is the case that is hit in the default scenario
-        # Split the dataset by a specific date
-        '''
-        if args.without_timezone:
-            splitDate = datetime.strptime(args.date, '%Y/%m/%d')
+        splitDate = datetime.strptime(args.date + " +0000", '%Y/%m/%d %z')
+        logger.warning("Be careful with the timezone {} ".format(\
+            splitDate.strftime("%m/%d/%Y, %H:%M:%S %z")))
+
+    logger.info('Using %s date to split database into training and test.' \
+        % splitDate.strftime('%Y/%m/%d'))
+    '''
+
+    #goes through all bugs and assigns date and bug to the same itterable
+    for idx, (date, bug) in enumerate(sortedBugs):
+        #gets masterid of current bug
+        masterId = masterSetIdByBug.get(bug['bug_id'])
+
+        #add all bugs to testReports, only using our data for inference
+        testReports.append(bug)
+        l = testDuplicateReports
+
+        if masterId is None:
+            # It is not duplicate or it is not master report that contains duplicate reports
+            continue
+
+        # A report is only considered duplicate when another report from 
+        # the same master set has already been retrieved before.
+        # if we have seen the masterid for the bug already then it is a duplicate, append to duplicate list, if we have not seen the masterid yet append the masterid to masterid already seen list for future use
+        if masterId in masterAlreadySeen:
+            l.append(bug)
         else:
-            splitDate = datetime.strptime(args.date + " +0000", '%Y/%m/%d %z')
-            logger.warning("Be careful with the timezone {} ".format(\
-                splitDate.strftime("%m/%d/%Y, %H:%M:%S %z")))
-
-        logger.info('Using %s date to split database into training and test.' \
-            % splitDate.strftime('%Y/%m/%d'))
-        '''
-
-        #goes through all bugs and assigns date and bug to the same itterable
-        for idx, (date, bug) in enumerate(sortedBugs):
-            #gets masterid of current bug
-            masterId = masterSetIdByBug.get(bug['bug_id'])
-
-            #add all bugs to testReports, only using our data for inference
-            testReports.append(bug)
-            l = testDuplicateReports
-
-            if masterId is None:
-                # It is not duplicate or it is not master report that contains duplicate reports
-                continue
-
-            # A report is only considered duplicate when another report from 
-            # the same master set has already been retrieved before.
-            # if we have seen the masterid for the bug already then it is a duplicate, append to duplicate list, if we have not seen the masterid yet append the masterid to masterid already seen list for future use
-            if masterId in masterAlreadySeen:
-                l.append(bug)
-            else:
-                masterAlreadySeen.add(masterId)
+            masterAlreadySeen.add(masterId)
 
     logger.info(
         'Total:\t%d duplicate bugs\t%d of bug reports' % (len(testDuplicateReports), len(sortedBugs)))
 
-    saveFile(args.test, info, testReports, testDuplicateReports) #save list of reports and duplicaet reports to test file
+    logger.info('Saving testset')
+    test_file = os.path.join(args.project_path, ("test_" + PROJECT + ".txt"))
+    #changed from args.test to test_file
+    saveFile(test_file, info, testReports, testDuplicateReports) #save list of reports and duplicaet reports to test file
 
-    logger.info('Saving json file')
+    logger.info('Success!')
     
     '''
     ##save the bug_data to bug_data file, this in the example was the same as the input json file
@@ -551,4 +475,4 @@ if __name__ == '__main__':
             f.write('\n')
 
     logger.info("Finished!!!")
-'''
+    '''

@@ -3,15 +3,23 @@ import os
 import re
 import pandas as pd
 import sys
+import argparse
+import logging
 
-
-project_path = "/scratch/projects/sam/repos/SABD_Replication_SB/dataset/andOTP"
-path_to_jsonl_file = "../dataset/andOTP/andOTP.jsonl"
-path_to_duplicate_csv = "/scratch/projects/sam/repos/SABD_Replication_SB/data_processing/SEA_Lab_Data_And_Duplicate_Information.csv"
-project_name = "andOTP"
-
+#this does not need to be a argument, it does not change 
+path_to_duplicate_csv = "/scratch/projects/sam/repos/SABD_Replication_SB/data_processing/SEA_Lab_query_corpus_ground_truth_Final.csv"
 
 if __name__ == '__main__':
+    #adding arguments
+    parser = argparse.ArgumentParser(description='Process some integers.') #left it the same as the parser in create_test_set
+    parser.add_argument('--project_name', required=True, help="name of the project, used for jsonl file name")
+    parser.add_argument('--project_path', required=True, help="path to project containing json format issues")
+    args = parser.parse_args()
+
+    project_path = args.project_path
+    project_name = args.project_name
+    path_to_jsonl_file = os.path.join(project_path,(project_name + ".jsonl"))
+
     #saving each bug report in a dictionary, it will be a dictionary of dictionaries, the key will be the bug_report and the value will be all necessary fields for the jsonl file
     jsonl_dictionary_list = []
 
@@ -20,8 +28,6 @@ if __name__ == '__main__':
     #itterate through each path, until no more files in the folder
     #change path_to_json_file each time
     bug_reports = os.listdir(project_path)
-    print(len(bug_reports))
-    sys.exit(0)
 
     for bug_report in bug_reports:
         path_to_report = os.path.join(project_path,bug_report)
@@ -42,16 +48,25 @@ if __name__ == '__main__':
         #find dup_id for bug_id
         #populate dup_id field of jsonl_dictionary
         duplicate_csv = pd.read_csv(path_to_duplicate_csv)
-        project_reports = duplicate_csv[duplicate_csv["Repository_Name"] == "andOTP"]
-        curr_corresponding_row = project_reports[project_reports["Issue_Number"] == data['number']]
+        project_reports = duplicate_csv[duplicate_csv["Repository_Name"] == project_name]
+
+        #this should check if the issue number is in 
+        if project_reports["query"].isin([data['number']]).any():
+            curr_corresponding_row = project_reports[project_reports["query"] == data['number']]
+            csv_index = curr_corresponding_row.index[0]
+            ground_truth_string = curr_corresponding_row.loc[csv_index][3]
+            #adds only the numbers from the ground truth string to the ground truth list
+            ground_truth_list = [number for number in (re.split(r"[\[\]\|]", ground_truth_string)) if number.isalnum()]
+            curr_dup_id = ground_truth_list[0]
+        else:
+            #if the current dup_id has no ground truth, its ground truth is an empty list
+            curr_dup_id = []
+
+        
         
         #this is done because csv index is maintained even in filtered data frame, need exact index for look up
-        csv_index = curr_corresponding_row.index[0]
-        curr_dup_id = curr_corresponding_row.loc[csv_index][10]
-        if curr_dup_id[0] == '#':
-            curr_dup_id = curr_dup_id[1:]
 
-        jsonl_dictionary = {'bug_id': str(data['number']),'creation_ts':creation_ts,'short_desc':data['title'],'product':"",'component':"",'version':"",'bug_status':data['state'],'priority':"",'bug_severity':"", 'description':data['body'],'dup_id':(curr_dup_id if curr_dup_id != "[]" else [])}
+        jsonl_dictionary = {'bug_id': str(data['number']),'creation_ts':creation_ts,'short_desc':data['title'],'product':"",'component':"",'version':"",'bug_status':data['state'],'priority':"",'bug_severity':"", 'description':data['body'],'dup_id':curr_dup_id}
         jsonl_dictionary_list.append(jsonl_dictionary)
         print("issue ", str(data['number']), " processed")
         json_file.close()

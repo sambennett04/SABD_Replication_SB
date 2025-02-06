@@ -167,6 +167,8 @@ class SunRanking(object):
         return self.allBugs
 
     def getCandidateList(self, anchorId):
+        #make this variable true to enable the one year window between querry and candidate
+        use_one_year_window = False
         candidates = []
         anchor = self.bugReportDatabase.getBug(anchorId)
         anchorCreationDate = readDateFromBug(anchor)
@@ -228,16 +230,19 @@ class SunRanking(object):
                 bug_timestamp = int(bugCreationDate / (24 * 60 * 60))
                 newest_report = bugId
 
-            # Is it in the window?
-            #investigate how the window functions with test set candidates
+            #Is it in the window?
             #if the gap between bugs is greater than one year, dont consider it a candidate
             #anchorDayTimestamp is the creation time of the current querry we are fetching candidates for
-            if 0 < self.window < (anchorDayTimestamp - bug_timestamp):
+            if use_one_year_window and (0 < self.window < (anchorDayTimestamp - bug_timestamp)):
                 nSkipped += 1
                 continue
 
             # Count number of duplicate bug reports
             #if the masterId of the querry, equal the master Id of the candidate, update duplicate bugs
+            #print("anchor is ", anchorId, "has master id of ", anchorMasterId,"\n\n")
+            #print("current bug id is ", bugId, "has master id of ", masterId,"\n\n")
+
+
             if anchorMasterId == masterId:
                 nDupBugs += 1
 
@@ -258,7 +263,7 @@ class SunRanking(object):
             return []
         
         #move to log ranking results
-        print("candidates for {fbugId} are {fcandidates}".format(fbugId = anchorId, fcandidates = candidates))
+        #print("candidates for {fbugId} are {fcandidates}".format(fbugId = anchorId, fcandidates = candidates))
         return candidates
 
 
@@ -398,21 +403,26 @@ class RecallRate(object):
 
     def update(self, anchorId, recommendationList):
         mastersetId = self.masterIdByBugId[anchorId]
-        masterSet = self.masterSetById[mastersetId]
+        masterSet = self.masterSetById[mastersetId] #get all duplicates in bucket for groundtruth
         # biggestKValue = self.k[-1]
 
         # pos = biggestKValue + 1
         pos = math.inf
         correct_cand = None
 
+        print("the recomendation list for the current querry ", anchorId, " is ", recommendationList)
+
         if len(recommendationList) == 0:
             self.logger.warning("Recommendation list of {} is empty. Consider it as miss.".format(anchorId))
         else:
             seenMasters = set()
 
+            #go through recomendation list
+            #find the masterId of the each bug
             for bugId, p in recommendationList:
                 mastersetId = self.masterIdByBugId[bugId]
 
+                #if the current masterId has already seen pass, otherwise add the current master id to seenMasters
                 if self.groupByMaster:
                     if mastersetId in seenMasters:
                         continue
@@ -424,9 +434,11 @@ class RecallRate(object):
                 # if len(seenMasters) == pos:
                 #     break
 
+                #the master set here is the bucket
+                #if the current bug is in the masterSet, 
                 if bugId in masterSet:
-                    pos = len(seenMasters)
-                    correct_cand = bugId
+                    pos = len(seenMasters) 
+                    correct_cand = bugId #most recent bugId seen in the master set
                     break
 
         # If one of k duplicate bugs is in the list of duplicates, so we count as hit. We calculate the hit for each different k
