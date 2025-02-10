@@ -1,7 +1,7 @@
 {
-    "test_bug_database": "../dataset/andOTP/andOTP_soft_clean.jsonl",
-    "bug_database": "../dataset/andOTP/andOTP.jsonl",
-    "database_name": "vscode",
+    "test_bug_database": "../dataset/SEA_issue_reports/openfoodfacts-androidapp/openfoodfacts-androidapp_soft_clean.jsonl",
+    "bug_database": "../dataset/SEA_issue_reports/openfoodfacts-androidapp/openfoodfacts-androidapp_soft_clean.jsonl",
+    "database_name": "openfoodfacts-androidapp",
     "epochs": 12,
     "lr": 0.001,
     "batch_size": 256,
@@ -63,7 +63,7 @@
     "lr_scheduler": null,
     "recall_rate": {
         "type": "sun2011",
-        "dataset": "../dataset/andOTP/test_andOTP.txt",
+        "dataset": "../dataset/SEA_issue_reports/openfoodfacts-androidapp/test_openfoodfacts-androidapp.txt",
         "group_by_master": true,
         "window": 365
     },

@@ -410,7 +410,7 @@ class RecallRate(object):
         pos = math.inf
         correct_cand = None
 
-        print("the recomendation list for the current querry ", anchorId, " is ", recommendationList)
+        #print("the recomendation list for the current querry ", anchorId, " is ", recommendationList)
 
         if len(recommendationList) == 0:
             self.logger.warning("Recommendation list of {} is empty. Consider it as miss.".format(anchorId))

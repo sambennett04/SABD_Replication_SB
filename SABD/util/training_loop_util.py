@@ -87,12 +87,12 @@ def logRankingResult(expRun, logger, rankingClass, rankingScorer, bugReportDatab
             #this line calculates the recommendation from the model for querry and candidates
             #the rankingScorer is used here for its score function, whihc needs preprocessors just to get bug by id from the dataset
 
-        print("recomendation for ", duplicateBugId, "is ", recommendation)
+        #print("recomendation for ", duplicateBugId, "is ", recommendation)
         # Update the metrics
         pos, correct_cand = recallRateMetric.update(duplicateBugId, recommendation)
 
-        print("pos for ", duplicateBugId, "is ", pos)
-        print("correct_cand for ", duplicateBugId, "is ", correct_cand)
+        #print("pos for ", duplicateBugId, "is ", pos)
+        #print("correct_cand for ", duplicateBugId, "is ", correct_cand)
 
         positions.append(pos)
 
